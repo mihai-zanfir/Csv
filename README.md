@@ -119,6 +119,8 @@ b. Write some code to prevent SQL Injection
 c. Save the data from the CSV in database in small groups using batches and transactions
 d. Better Error Handling and response messaging
 e. Using a relational database as: Oracle, Microsoft SQL Server, MySQL, etc.
+f. Writing Unit Tests using JUnit
+g. Writing functional tests
 
 If you have more questions, free free to ask me.
 
