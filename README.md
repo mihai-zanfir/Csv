@@ -31,19 +31,29 @@ We could set it a file database so that its data won't be lost when the app is r
 How do you query the database?
 
 First I'll give 3 links for the requested queries:
+
 a.Total Clicks for a given Datasource for a given Date range:
+
 http://localhost:8080/api/search?display=SUM(CLICKS)&condition=DATASOURCE='Google Ads' AND DAILY>'2020-01-01' AND DAILY<'2020-01-31'&showSQL=true
+
 The associated SQL query is:
+
 SELECT SUM(CLICKS) FROM STATISTIC WHERE DATASOURCE='Google Ads' AND DAILY>'2020-01-01' AND DAILY<'2020-01-31'
 
 b.Click-Through Rate (CTR) per Datasource and Campaign:
+
 http://localhost:8080/api/search?display=SUM(CLICKS),DATASOURCE,CAMPAIGN&groupBy=DATASOURCE,CAMPAIGN&orderBy=1 DESC&showSQL=true
+
 The associated SQL query is:
+
 SELECT SUM(CLICKS),DATASOURCE,CAMPAIGN FROM STATISTIC GROUP BY DATASOURCE,CAMPAIGN ORDER BY 1 DESC
 
 c.Impressions over time (daily):
+
 http://localhost:8080/api/search?display=DAILY,SUM(IMPRESSIONS)&groupBy=DAILY&orderBy=1 DESC&showSQL=true
+
 The associated SQL query is:
+
 SELECT DAILY,SUM(IMPRESSIONS) FROM STATISTIC GROUP BY DAILY ORDER BY 1 DESC
 
 Additional help for queries:
@@ -114,12 +124,19 @@ or
 http://localhost:8080/swagger-ui/index.html?configUrl=/csv-openapi/swagger-config
 
 Improvements that can be done:
+
 a. Create a nice UI Frontend interface
+
 b. Write some code to prevent SQL Injection
+
 c. Save the data from the CSV in database in small groups using batches and transactions
+
 d. Better Error Handling and response messaging
+
 e. Using a relational database as: Oracle, Microsoft SQL Server, MySQL, etc.
+
 f. Writing Unit Tests using JUnit
+
 g. Writing functional tests
 
 If you have more questions, free free to ask me.
