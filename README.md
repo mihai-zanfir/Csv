@@ -7,7 +7,7 @@ This code is a web application for an API for importing a Csv file and Querying 
 1. First operation that needs to be done is to upload a CSV file.
 2. After that, the database can be queried using multiple parameters.
 
-1. The CSV format is the one Adverity provided as in the following example:
+The CSV format is the one Adverity provided as in the following example:
 Datasource,Campaign,Daily,Clicks,Impressions
 Google Ads,Adventmarkt Touristik,11/12/19,7,22425
 Google Ads,Adventmarkt Touristik,11/13/19,16,45452
@@ -25,7 +25,8 @@ The database is H2 which is an embeddable database and it runs on your PC memory
 At restart of this application, the database will also be removed so you will have to upload the Csv file one more time.
 We could set it a file database so that its data won't be lost when the app is restarted.
 
-2. How do you query the database?
+How do you query the database?
+
 First I'll give 3 links for the requested queries:
 a.Total Clicks for a given Datasource for a given Date range:
 http://localhost:8080/api/search?display=SUM(CLICKS)&condition=DATASOURCE='Google Ads' AND DAILY>'2020-01-01' AND DAILY<'2020-01-31'&showSQL=true
@@ -43,6 +44,7 @@ The associated SQL query is:
 SELECT DAILY,SUM(IMPRESSIONS) FROM STATISTIC GROUP BY DAILY ORDER BY 1 DESC
 
 Additional help for queries:
+
 If you add the showSQL=true parameter, you will get the SQL that is executed in the database for your query
 and the number of records you got on execution.
 The values of the parameters are similar with the ones you would use for a SQL query so keep in mind that H2 database is used so that, if you need something more complex, you need to look for the H2 SQL commands.
@@ -79,6 +81,7 @@ What parameters can you use?
 	 @param showSQL If set to true, it will show the SQL generated on the top of records and the number of records found
 
 What column names could you use?
+
 The column name that could be used here are: DATASOURCE, CAMPAIGN, DAILY, CLICKS, IMPRESSIONS, ID
 
 These parameters offer a generic custom way to implement a huge variety of queries.
@@ -91,6 +94,7 @@ This is useful when there are a lot of records and you would like to go through 
 Angular for instance has a Material Table UI component that has pagination already implemented and it only need these 2 parameters to be able to have a working Pagination.
 
 How to query the database?
+
 This app contains a H2 console that can be used to execute SQL queries over the STATISTIC table that is created and used by this application.
 In order to access it you could go to the following url:
 http://localhost:8080/h2-console/
@@ -100,6 +104,7 @@ Username: sa
 There is no password for now
 
 Swagger Open API UI:
+
 There is also available a user interface for testing the Csv API through the Swagger Open API:
 http://localhost:8080/swagger-ui.html
 or
