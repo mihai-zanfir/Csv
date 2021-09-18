@@ -1,6 +1,9 @@
 CSV Statistics created for Adverity
+
 Author Mihai Zanfir
+
 https://www.linkedin.com/in/mihai-zanfir-44671194/
+
 
 This code is a web application for an API for importing a Csv file and Querying statistics.
 
@@ -120,6 +123,9 @@ e. Using a relational database as: Oracle, Microsoft SQL Server, MySQL, etc.
 If you have more questions, free free to ask me.
 
 Thanks,
+
 Mihai Zanfir
+
 z_mihai_c@yahoo.com
+
 https://www.linkedin.com/in/mihai-zanfir-44671194/
