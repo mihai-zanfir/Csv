@@ -30,6 +30,8 @@ import lombok.extern.log4j.Log4j2;
  * c. Save the data from the CSV in database in small groups using batches and transactions
  * d. Better Error Handling and response messaging
  * e. Using a relational database as: Oracle, Microsoft SQL Server, MySQL, etc.
+ * f. Writing Unit Tests using JUnit
+ * g. Writing functional tests
  */
 public class CsvController {
 
@@ -52,10 +54,10 @@ public class CsvController {
 	 * @return A response text with the status of the operation which could be Success or Error
 	 */
 	@PostMapping("/upload-csv-file")
-    public ResponseEntity<String> uploadCSVFile(@RequestParam("file") MultipartFile file) {
+        public ResponseEntity<String> uploadCSVFile(@RequestParam("file") MultipartFile file) {
 		log.info("uploadCSVFile() -- " + file.getName());
-        return csvService.uploadCSVFile(file);
-    }
+                return csvService.uploadCSVFile(file);
+        }
 	
 	/**
 	 * Search the database and get a list of Statistic results based on the input query parameters
