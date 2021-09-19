@@ -49,37 +49,37 @@ public class CsvService {
 	 * @return A response text with the status of the operation which could be Success or Error
 	 */
 	public ResponseEntity<String> uploadCSVFile(MultipartFile file) {
-        // validate file
+        	// validate file
 		String msg = "";
-        if (file.isEmpty()) {
-        	msg = "Please select a CSV file to upload. ";
-        	log.error(msg + file.getName());
-        	ResponseEntity.ok(msg);
-        } else {
-            // parse CSV file to create a list of `StatisticsCsv` objects
-            try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-                // create csv bean reader
-                CsvToBean<StatisticCsv> csvToBean = new CsvToBeanBuilder(reader)
-                        .withType(StatisticCsv.class)
-                        .withIgnoreLeadingWhiteSpace(true)
-                        .build();
-                // convert `CsvToBean` object to list of StatisticCsv and map it to list of Statistic entities
-                List<Statistic> statistics = statisticMapper.mapListEntityCsvToListEntity(csvToBean.parse());
+        	if (file.isEmpty()) {
+        		msg = "Please select a CSV file to upload. ";
+        		log.error(msg + file.getName());
+        		ResponseEntity.ok(msg);
+        	} else {
+            		// parse CSV file to create a list of `StatisticsCsv` objects
+            		try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+                		// create csv bean reader
+                		CsvToBean<StatisticCsv> csvToBean = new CsvToBeanBuilder(reader)
+                        		.withType(StatisticCsv.class)
+                        		.withIgnoreLeadingWhiteSpace(true)
+                        		.build();
+                		// convert `CsvToBean` object to list of StatisticCsv and map it to list of Statistic entities
+                		List<Statistic> statistics = statisticMapper.mapListEntityCsvToListEntity(csvToBean.parse());
 
-                // Save statistics in DB
-                statisticRepository.saveAll(statistics);
-                List<Statistic> statisticsSaved = statisticRepository.findAll();
-                msg = "Successful saved in database: " + statisticsSaved.size();
-                log.info(msg);
-                return ResponseEntity.ok(msg);
-            } catch (IOException ex) {
-            	msg = "Errors: " + ex.getMessage();
-            	log.error(msg);
-            	ResponseEntity.ok(msg);
-            }
-        }
-        return ResponseEntity.ok("Success");
-    }
+                		// Save statistics in DB
+                		statisticRepository.saveAll(statistics);
+                		List<Statistic> statisticsSaved = statisticRepository.findAll();
+                		msg = "Successful saved in database: " + statisticsSaved.size();
+                		log.info(msg);
+                		return ResponseEntity.ok(msg);
+            		} catch (IOException ex) {
+            			msg = "Errors: " + ex.getMessage();
+            			log.error(msg);
+            			ResponseEntity.ok(msg);
+            		}
+        	}
+        	return ResponseEntity.ok("Success");
+    	}
 
 	/**
 	 * Search the database and get a list of Statistic results based on the input query parameters
