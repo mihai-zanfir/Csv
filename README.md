@@ -125,19 +125,32 @@ http://localhost:8080/swagger-ui/index.html?configUrl=/csv-openapi/swagger-confi
 
 Improvements that can be done:
 
-a. Create a nice UI Frontend interface
+1. Create a nice UI Frontend interface:
+For Upload I would create a component having a progress bar so that to see the time when the CSV is uploaded (or processed). 
+For Queries I would create a UI with some WYSWG components (ex: column names, *, COUNT, SUM, etc.) so that to create these queries easier.
 
-b. Write some code to prevent SQL Injection
+2. Write some code to prevent SQL Injection
 
-c. Save the data from the CSV in database in small groups using batches and transactions
+3. Save the data from the CSV in database in bulks (small groups) using batches and transaction
 
-d. Better Error Handling and response messaging
+4. Better Error Handling and response messaging
 
-e. Using a relational database as: Oracle, Microsoft SQL Server, MySQL, etc.
+5. Using a relational database as: Oracle, Microsoft SQL Server, MySQL, etc so that the processed inserted data is not lost.
 
-f. Writing Unit Tests using JUnit
+6. Writing Unit Tests using JUnit
 
-g. Writing functional tests
+7. Writing functional tests using Groovy
+
+8. I would create some indexes on the database table so that the queries will run faster. The inserts will take longer but the read and searches in the database will be faster than before.
+
+9. Since DATASOURCE CAMPAIGN contain a limited number of values, I would normalize the table and put these on their own tables so in the end it will be 3 database tables
+At processing CSV time, we will check these values with the existing values and if it does not found the value in these table, it will insert them
+This will be replaced in the main table with 2 ID columns that will be linked with the 2 tables via some foreign keys.
+
+10. Cache the database entitities and requests to the backend so that similar future requets will not be executed in the database but brought from the cache
+
+11. 
+
 
 If you have more questions, free free to ask me.
 
