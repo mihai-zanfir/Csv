@@ -24,6 +24,7 @@ import lombok.extern.log4j.Log4j2;
  * 
  * @author Mihai Zanfir - https://www.linkedin.com/in/mihai-zanfir-44671194/
  * 
+ * Improvements that can be done to this code:
  * 1. Create a nice UI Frontend interface:
  *    For Upload I would create a component having a progress bar so that to see the time when the CSV is uploaded (or processed). 
  *    For Queries I would create a UI with some WYSWG components (ex: column names, *, COUNT, SUM, etc.) so that to create these queries easier.
