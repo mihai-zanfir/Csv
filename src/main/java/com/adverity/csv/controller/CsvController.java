@@ -24,14 +24,21 @@ import lombok.extern.log4j.Log4j2;
  * 
  * @author Mihai Zanfir - https://www.linkedin.com/in/mihai-zanfir-44671194/
  * 
- * Improvements that can be done:
- * a. Create a nice UI Frontend interface
- * b. Write some code to prevent SQL Injection
- * c. Save the data from the CSV in database in small groups using batches and transactions
- * d. Better Error Handling and response messaging
- * e. Using a relational database as: Oracle, Microsoft SQL Server, MySQL, etc.
- * f. Writing Unit Tests using JUnit
- * g. Writing functional tests
+ * 1. Create a nice UI Frontend interface:
+ *    For Upload I would create a component having a progress bar so that to see the time when the CSV is uploaded (or processed). 
+ *    For Queries I would create a UI with some WYSWG components (ex: column names, *, COUNT, SUM, etc.) so that to create these queries easier.
+ * 2. Write some code to prevent SQL Injection
+ * 3. Save the data from the CSV in database in bulks (small groups) using batches and transaction
+ * 4. Better Error Handling and response messaging
+ * 5. Using a relational database as: Oracle, Microsoft SQL Server, MySQL, etc so that the processed inserted data is not lost.
+ * 6. Writing Unit Tests using JUnit
+ * 7. Writing functional tests using Groovy
+ * 8. I would create some indexes on the database table so that the queries will run faster. The inserts will take longer but the read and searches in the database will be faster than before.
+ * 9. Since DATASOURCE CAMPAIGN contain a limited number of values, I would normalize the table and put these on their own tables so in the end it will be 3 database tables
+ *    At processing CSV time, we will check these values with the existing values and if it does not found the value in these table, it will insert them
+ *    This will be replaced in the main table with 2 ID columns that will be linked with the 2 tables via some foreign keys.
+ * 10. Cache the database entitities and requests to the backend so that similar future requets will not be executed in the database but brought from the cache
+ * 11. etc.
  */
 public class CsvController {
 
