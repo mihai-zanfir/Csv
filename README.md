@@ -16,9 +16,8 @@ Google Ads,Adventmarkt Touristik,11/12/19,7,22425
 Google Ads,Adventmarkt Touristik,11/13/19,16,45452
 The test CSV has 23198 different records.
 
-If there is no upload UI than, postman app can be used for uploading the CSV file via the following link:
-http://zanfir-mihai.go.ro:8080/api/upload-csv-file?file=
-You need to set a "Body" parameter for "form-data" named "file" and is a File type.
+I also did a UI interface for uploading the Csv. Click on the following link:
+http://zanfir-mihai.go.ro:8080
 
 The uploaded Csv file is processed and its records are stored in the database.
 After uploading you should receive a message like the following: Successful saved in database: 23198
