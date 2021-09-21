@@ -17,7 +17,7 @@ Google Ads,Adventmarkt Touristik,11/13/19,16,45452
 The test CSV has 23198 different records.
 
 If there is no upload UI than, postman app can be used for uploading the CSV file via the following link:
-http://localhost:8080/api/upload-csv-file?file=
+http://zanfir-mihai.go.ro:8080/api/upload-csv-file?file=
 You need to set a "Body" parameter for "form-data" named "file" and is a File type.
 
 The uploaded Csv file is processed and its records are stored in the database.
@@ -34,7 +34,7 @@ First I'll give 3 links for the requested queries:
 
 a.Total Clicks for a given Datasource for a given Date range:
 
-http://localhost:8080/api/search?display=SUM(CLICKS)&condition=DATASOURCE='Google Ads' AND DAILY>'2020-01-01' AND DAILY<'2020-01-31'&showSQL=true
+http://zanfir-mihai.go.ro:8080/api/search?display=SUM(CLICKS)&condition=DATASOURCE='Google Ads' AND DAILY>'2020-01-01' AND DAILY<'2020-01-31'&showSQL=true
 
 The associated SQL query is:
 
@@ -42,7 +42,7 @@ SELECT SUM(CLICKS) FROM STATISTIC WHERE DATASOURCE='Google Ads' AND DAILY>'2020-
 
 b.Click-Through Rate (CTR) per Datasource and Campaign:
 
-http://localhost:8080/api/search?display=SUM(CLICKS),DATASOURCE,CAMPAIGN&groupBy=DATASOURCE,CAMPAIGN&orderBy=1 DESC&showSQL=true
+http://zanfir-mihai.go.ro:8080/api/search?display=SUM(CLICKS),DATASOURCE,CAMPAIGN&groupBy=DATASOURCE,CAMPAIGN&orderBy=1 DESC&showSQL=true
 
 The associated SQL query is:
 
@@ -50,7 +50,7 @@ SELECT SUM(CLICKS),DATASOURCE,CAMPAIGN FROM STATISTIC GROUP BY DATASOURCE,CAMPAI
 
 c.Impressions over time (daily):
 
-http://localhost:8080/api/search?display=DAILY,SUM(IMPRESSIONS)&groupBy=DAILY&orderBy=1 DESC&showSQL=true
+http://zanfir-mihai.go.ro:8080/api/search?display=DAILY,SUM(IMPRESSIONS)&groupBy=DAILY&orderBy=1 DESC&showSQL=true
 
 The associated SQL query is:
 
@@ -110,7 +110,7 @@ How to query the database?
 
 This app contains a H2 console that can be used to execute SQL queries over the STATISTIC table that is created and used by this application.
 In order to access it you could go to the following url:
-http://localhost:8080/h2-console/
+http://zanfir-mihai.go.ro:8080/h2-console/
 Use the following login parameters:
 JDBC URL: jdbc:h2:mem:testdb
 Username: sa
@@ -119,9 +119,9 @@ There is no password for now
 Swagger Open API UI:
 
 There is also available a user interface for testing the Csv API through the Swagger Open API:
-http://localhost:8080/swagger-ui.html
+http://zanfir-mihai.go.ro:8080/swagger-ui.html
 or
-http://localhost:8080/swagger-ui/index.html?configUrl=/csv-openapi/swagger-config
+http://zanfir-mihai.go.ro:8080/swagger-ui/index.html?configUrl=/csv-openapi/swagger-config
 
 Improvements that can be done:
 
