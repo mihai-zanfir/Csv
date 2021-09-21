@@ -17,6 +17,7 @@ Google Ads,Adventmarkt Touristik,11/13/19,16,45452
 The test CSV has 23198 different records.
 
 I also did a UI interface for uploading the Csv. Click on the following link:
+
 http://zanfir-mihai.go.ro:8080
 
 The uploaded Csv file is processed and its records are stored in the database.
