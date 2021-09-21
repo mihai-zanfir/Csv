@@ -12,8 +12,8 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.adverity.csv.mapper.StatisticMapper;
@@ -49,13 +49,13 @@ public class CsvService {
 	 * @return A response text with the status of the operation which could be
 	 *         Success or Error
 	 */
-	public ResponseEntity<String> uploadCSVFile(MultipartFile file) {
+	public String uploadCSVFile(MultipartFile file, Model model) {
 		// validate file
 		String msg = "";
+		boolean status = false;
 		if (file.isEmpty()) {
 			msg = "Please select a CSV file to upload. ";
 			log.error(msg + file.getName());
-			return ResponseEntity.ok(msg);
 		} else {
 			// parse CSV file to create a list of `StatisticsCsv` objects
 			try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
@@ -66,20 +66,20 @@ public class CsvService {
 				// convert `CsvToBean` object to list of StatisticCsv and map it to list of
 				// Statistic entities
 				List<Statistic> statistics = statisticMapper.mapListEntityCsvToListEntity(csvToBean.parse());
-
 				// Save statistics in DB
 				statisticRepository.saveAll(statistics);
 				List<Statistic> statisticsSaved = statisticRepository.findAll();
-				msg = "Successful saved in database: " + statisticsSaved.size();
+				msg = "Successful saved in database: " + statisticsSaved.size() + " records";
 				log.info(msg);
-				return ResponseEntity.ok(msg);
+				status = true;
 			} catch (IOException ex) {
 				msg = "Errors: " + ex.getMessage();
 				log.error(msg);
-				ResponseEntity.ok(msg);
 			}
 		}
-		return ResponseEntity.ok("Success");
+		model.addAttribute("message", msg);
+        model.addAttribute("status", status);
+		return "file-upload-status";
 	}
 
 	/**
@@ -131,25 +131,21 @@ public class CsvService {
 	 * @return a List of records or a text that will indicate the result of this
 	 *         operation (No results or ... Error)
 	 */
-	public ResponseEntity<?> searchStatistics(String display, String condition, String groupBy, String orderBy,
-			String offset, String limit, String showSQL) {
+	public String searchStatistics(String display, String condition, String groupBy, String orderBy,
+			String offset, String limit, String showSQL, Model model) {
 		String sql = createSQL(display, condition, groupBy, orderBy, offset, limit);
 		Query query = entityManager.createNativeQuery(sql);
 		List<Object> statistics = query.getResultList();
-		String msg = "";
 		if (statistics.size() > 0) {
-			msg = "Total records: " + String.valueOf(statistics.size());
-			if ("true".equalsIgnoreCase(showSQL)) {
-				statistics.add(0, msg);
-				statistics.add(0, sql);
-			}
+			log.info("Total records: " + String.valueOf(statistics.size()));
 		} else {
-			msg = "There are no records in the database!";
-			statistics.add(sql);
-			statistics.add(msg);
+			log.info("There are no records in the database!");
 		}
-		log.info(msg);
-		return ResponseEntity.ok(statistics);
+		model.addAttribute("statistics", statistics);
+		if (isNotBlank(showSQL)) {
+			model.addAttribute("sql", sql);
+		}
+		return "query-results";
 	}
 
 	/**

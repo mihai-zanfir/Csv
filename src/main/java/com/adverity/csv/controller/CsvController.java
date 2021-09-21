@@ -1,11 +1,12 @@
 package com.adverity.csv.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.adverity.csv.service.CsvService;
@@ -14,7 +15,7 @@ import io.swagger.annotations.Api;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
-@RestController
+@Controller
 @Api(tags = "Csv Controller coded by Mihai Zanfir")
 @Log4j2
 @AllArgsConstructor
@@ -76,9 +77,9 @@ public class CsvController {
 	 *         Success or Error
 	 */
 	@PostMapping("/upload-csv-file")
-	public ResponseEntity<String> uploadCSVFile(@RequestParam("file") MultipartFile file) {
+	public String uploadCSVFile(@RequestParam("file") MultipartFile file, Model model) {
 		log.info("uploadCSVFile() -- " + file.getName());
-		return csvService.uploadCSVFile(file);
+		return csvService.uploadCSVFile(file, model);
 	}
 
 	/**
@@ -135,16 +136,17 @@ public class CsvController {
 	 *         operation (No results or ... Error)
 	 */
 	@GetMapping("/search")
-	public ResponseEntity<?> searchStatistics(@RequestParam(name = "display", required = false) String display,
+	public String searchStatistics(@RequestParam(name = "display", required = false) String display,
 			@RequestParam(name = "condition", required = false) String condition,
 			@RequestParam(name = "groupBy", required = false) String groupBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy,
 			@RequestParam(name = "offset", required = false) String offset,
 			@RequestParam(name = "limit", required = false) String limit,
-			@RequestParam(name = "showSQL", required = false) String showSQL) {
+			@RequestParam(name = "showSQL", required = false) String showSQL,
+			Model model) {
 		log.info("searchStatistics() -- display:" + display + " condition:" + condition + " groupBy:" + groupBy
 				+ " orderBy:" + orderBy + " offset:" + offset + " limit:" + limit + " showSQL:" + showSQL);
-		return csvService.searchStatistics(display, condition, groupBy, orderBy, offset, limit, showSQL);
+		return csvService.searchStatistics(display, condition, groupBy, orderBy, offset, limit, showSQL, model);
 	}
 	
 	/**
