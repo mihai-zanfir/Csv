@@ -2,6 +2,7 @@ package com.adverity.csv.model;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.time.LocalDate;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -41,7 +42,7 @@ public class Statistic implements Serializable {
 	private String campaign;
 	
 	@Column(name = "DAILY", nullable = false)
-	private Date daily;
+	private LocalDate daily;
 	
 	@Column(name = "CLICKS", nullable = false)
 	private int clicks;

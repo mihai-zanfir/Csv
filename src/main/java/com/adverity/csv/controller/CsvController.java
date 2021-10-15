@@ -1,5 +1,7 @@
 package com.adverity.csv.controller;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.stereotype.Controller;
@@ -12,6 +14,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.adverity.csv.service.CsvService;
 
 import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -64,6 +72,8 @@ public class CsvController {
 	/**
 	 * Homepage
 	 */
+	@Operation(summary = "Get the initial page")
+	@ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Get the initial page", content = @Content)})
 	@GetMapping("/")
 	public String index() {
 		return "index";
@@ -76,6 +86,10 @@ public class CsvController {
 	 * @return A response text with the status of the operation which could be
 	 *         Success or Error
 	 */
+	@Operation(summary = "Uploads a CSV file, parse it and save its data in the database")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "return A response text with the status of the operation which could be Success or Error",
+			content = @Content)})
 	@PostMapping("/upload-csv-file")
 	public String uploadCSVFile(@RequestParam("file") MultipartFile file, Model model) {
 		log.info("uploadCSVFile() -- " + file.getName());
@@ -135,15 +149,30 @@ public class CsvController {
 	 * @return a List of records or a text that will indicate the result of this
 	 *         operation (No results or ... Error)
 	 */
+	@Operation(summary = "Search the database and get a list of Statistic results based on the input query parameters")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Return a List of records or a text that will indicate the result of this operation", 
+						 content = @Content),
+			@ApiResponse(responseCode = "500", description = "Illegal query words were used", 
+			    		 content = @Content)})
 	@GetMapping("/search")
-	public String searchStatistics(@RequestParam(name = "display", required = false) String display,
-			@RequestParam(name = "condition", required = false) String condition,
-			@RequestParam(name = "groupBy", required = false) String groupBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy,
-			@RequestParam(name = "offset", required = false) String offset,
-			@RequestParam(name = "limit", required = false) String limit,
-			@RequestParam(name = "showSQL", required = false) String showSQL,
-			Model model) {
+	public String searchStatistics(
+			@Parameter(description = "The columns we want to be displayed on results. "
+					+ "The COLUMN NAMES that could be used here are: DATASOURCE, CAMPAIGN, DAILY, CLICKS, IMPRESSIONS, ID") 
+				@RequestParam(name = "display", required = false) String display,
+			@Parameter(description = "If this is used it will apply a condition used as WHERE or HAVING in the SQL query")
+				@RequestParam(name = "condition", required = false) String condition,
+			@Parameter(description = "If this is used than will GROUP BY after columns specified in this parameter")
+				@RequestParam(name = "groupBy", required = false) String groupBy,
+			@Parameter(description = "If this is used than it will order the results based on this parameter")
+				@RequestParam(name = "orderBy", required = false) String orderBy,
+			@Parameter(description = "If this is set than it will show the records starting from this ofset")
+				@RequestParam(name = "offset", required = false) String offset,
+			@Parameter(description = "If this is set than it will limit the records that is showing")
+				@RequestParam(name = "limit", required = false) String limit,
+			@Parameter(description = "If set to true, it will show the SQL generated on the top of records and the number of records found")
+				@RequestParam(name = "showSQL", required = false) String showSQL,
+			Model model, HttpServletResponse response) {
 		log.info("searchStatistics() -- display:" + display + " condition:" + condition + " groupBy:" + groupBy
 				+ " orderBy:" + orderBy + " offset:" + offset + " limit:" + limit + " showSQL:" + showSQL);
 		return csvService.searchStatistics(display, condition, groupBy, orderBy, offset, limit, showSQL, model);
@@ -154,6 +183,8 @@ public class CsvController {
 	 * 
 	 * @return A response string with the status of the operation
 	 */
+	@Operation(summary = "Get a test page")
+	@ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Get a test page", content = @Content)})
 	@GetMapping("/test")
 	public ResponseEntity<String> testGet() {
 		log.info("Test()");

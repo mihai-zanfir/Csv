@@ -1,8 +1,7 @@
 package com.adverity.csv.mapper;
 
-import java.sql.Date;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.mapstruct.Mapper;
@@ -35,16 +34,7 @@ public abstract class StatisticMapper {
 	 * @param date a Daily string that is coming from CSV in the following format "01/31/19"
 	 * @return a converted Date value of form "2019-01-31"
 	 */
-    Date mapDaily(String date) {
-        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yy");
-        java.sql.Date sqlDate = null;
-		try {
-			java.util.Date parsed = format.parse(date);
-			sqlDate = new java.sql.Date(parsed.getTime());
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	return sqlDate;
+	LocalDate mapDaily(String date) {
+		return LocalDate.parse(date, DateTimeFormatter.ofPattern("MM/dd/yy"));
     }
 }

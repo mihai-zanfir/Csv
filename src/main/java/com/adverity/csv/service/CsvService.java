@@ -2,6 +2,7 @@ package com.adverity.csv.service;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.containsAnyIgnoreCase;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,9 +13,11 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.adverity.csv.mapper.StatisticMapper;
 import com.adverity.csv.model.Statistic;
@@ -37,6 +40,8 @@ import lombok.extern.log4j.Log4j2;
 public class CsvService {
 	// Limits the displayed records to 1000
 	private final String RECORDS_DEFAULT_LIMIT = "1000";
+	// An array of illegal words. If the SQL contains any of these than it will throw a 500 error
+	private final String[] illegalWords = {"INSERT", "DELETE", "UPDATE"};
 
 	private final StatisticRepository statisticRepository;
 	private final StatisticMapper statisticMapper;
@@ -134,6 +139,7 @@ public class CsvService {
 	public String searchStatistics(String display, String condition, String groupBy, String orderBy,
 			String offset, String limit, String showSQL, Model model) {
 		String sql = createSQL(display, condition, groupBy, orderBy, offset, limit);
+		checkIllegalWords(sql);
 		Query query = entityManager.createNativeQuery(sql);
 		List<Object> statistics = query.getResultList();
 		if (statistics.size() > 0) {
@@ -219,5 +225,19 @@ public class CsvService {
 		}
 		log.info("SQL: " + sql);
 		return sql;
+	}
+	
+	/**
+	 * Checks if the SQL given as parameter contains any illegal words.
+	 * The illegal words for the moment are: INSERT, DELETE, UPDATE
+	 * If an illegal word is encountered then it will throw a 500 Error
+	 * 
+	 * @param sql input SQLquery string
+	 */
+	private void checkIllegalWords(String sql) {
+		if (containsAnyIgnoreCase(sql, illegalWords)) {
+			throw new ResponseStatusException(
+		           HttpStatus.INTERNAL_SERVER_ERROR, "Illegal query!");
+		}
 	}
 }
