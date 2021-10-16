@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -55,38 +56,51 @@ public class CsvService {
 	 *         Success or Error
 	 */
 	public String uploadCSVFile(MultipartFile file, Model model) {
-		// validate file
 		String msg = "";
 		boolean status = false;
-		if (file.isEmpty()) {
-			msg = "Please select a CSV file to upload. ";
-			log.error(msg + file.getName());
-		} else {
-			// parse CSV file to create a list of `StatisticsCsv` objects
-			try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-				// create csv bean reader
-				CsvToBean<StatisticCsv> csvToBean = new CsvToBeanBuilder(reader)
-						.withType(StatisticCsv.class)
-						.withIgnoreLeadingWhiteSpace(true).build();
-				// convert `CsvToBean` object to list of StatisticCsv and map it to list of
-				// Statistic entities
-				List<Statistic> statistics = statisticMapper.mapListEntityCsvToListEntity(csvToBean.parse());
+		if (!(file == null || file.isEmpty())) {
+			// parse Csv file and converts the list of StatisticCsv to a list of Statistic entities
+			List<Statistic> statistics = statisticMapper.mapListEntityCsvToListEntity(
+					parseCsvFile(file));
+			if (!statistics.isEmpty()) {
 				// Save statistics in DB
 				statisticRepository.saveAll(statistics);
 				List<Statistic> statisticsSaved = statisticRepository.findAll();
 				msg = "Successful saved in database: " + statisticsSaved.size() + " records";
-				log.info(msg);
 				status = true;
-			} catch (IOException ex) {
-				msg = "Errors: " + ex.getMessage();
+				log.info(msg);
+			} else {
+				msg = "There were errors on parsing the Csv file!";
 				log.error(msg);
 			}
+		} else {
+			msg = "Please select a CSV file to upload. ";
+			log.error(msg);
 		}
 		model.addAttribute("message", msg);
         model.addAttribute("status", status);
 		return "file-upload-status";
 	}
 
+	/**
+	 * Parse CSV file to create a list of Statistics entities
+	 * 
+	 * @param file A csv file to upload
+	 * @return A list of Statistic entities
+	 */
+	public List<StatisticCsv> parseCsvFile(MultipartFile file) {
+		try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+			// create csv bean reader
+			CsvToBean<StatisticCsv> csvToBean = new CsvToBeanBuilder(reader)
+					.withType(StatisticCsv.class)
+					.withIgnoreLeadingWhiteSpace(true).build();
+			return csvToBean.parse();
+		} catch (IOException ex) {
+			log.error("Parsing error: " + ex.getMessage());
+		}
+		return Collections.emptyList();
+	}
+	
 	/**
 	 * Search the database and get a list of Statistic results based on the input
 	 * query parameters This will only create and execute a SELECT query The COLUMN
@@ -148,7 +162,7 @@ public class CsvService {
 			log.info("There are no records in the database!");
 		}
 		model.addAttribute("statistics", statistics);
-		if (isNotBlank(showSQL)) {
+		if ("true".equalsIgnoreCase(showSQL)) {
 			model.addAttribute("sql", sql);
 		}
 		return "query-results";
@@ -197,7 +211,7 @@ public class CsvService {
 	 * 
 	 * @return A SELECT SQL query created using the input parameters
 	 */
-	private String createSQL(String display, String condition, String groupBy, String orderBy, String offset, String limit) {
+	public String createSQL(String display, String condition, String groupBy, String orderBy, String offset, String limit) {
 		if (isBlank(display)) {
 			display = "*";
 		}
@@ -230,11 +244,12 @@ public class CsvService {
 	/**
 	 * Checks if the SQL given as parameter contains any illegal words.
 	 * The illegal words for the moment are: INSERT, DELETE, UPDATE
+	 * This means it will only allow SELECT queries.
 	 * If an illegal word is encountered then it will throw a 500 Error
 	 * 
-	 * @param sql input SQLquery string
+	 * @param sql input SQL query that will be checked
 	 */
-	private void checkIllegalWords(String sql) {
+	public void checkIllegalWords(String sql) {
 		if (containsAnyIgnoreCase(sql, illegalWords)) {
 			throw new ResponseStatusException(
 		           HttpStatus.INTERNAL_SERVER_ERROR, "Illegal query!");
