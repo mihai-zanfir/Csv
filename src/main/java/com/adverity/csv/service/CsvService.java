@@ -42,7 +42,7 @@ public class CsvService {
 	// Limits the displayed records to 1000
 	private final String RECORDS_DEFAULT_LIMIT = "1000";
 	// An array of illegal words. If the SQL contains any of these than it will throw a 500 error
-	private final String[] illegalWords = {"INSERT", "DELETE", "UPDATE"};
+	private final String[] illegalWords = {"INSERT", "DELETE", "UPDATE", "DROP", "TABLE", "CREATE"};
 
 	private final StatisticRepository statisticRepository;
 	private final StatisticMapper statisticMapper;
@@ -246,6 +246,8 @@ public class CsvService {
 	 * The illegal words for the moment are: INSERT, DELETE, UPDATE
 	 * This means it will only allow SELECT queries.
 	 * If an illegal word is encountered then it will throw a 500 Error
+	 * 
+	 * This a simple SQL Injection prevention. Anyway, a most robust solution needs to be researched. 
 	 * 
 	 * @param sql input SQL query that will be checked
 	 */
