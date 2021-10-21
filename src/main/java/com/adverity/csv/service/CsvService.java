@@ -245,7 +245,7 @@ public class CsvService {
 	public void handleGroupBy(String groupBy, CriteriaBuilder builder, CriteriaQuery<Object> query, Root stat) {
 		if (isNotBlank(groupBy)) {
 			List<Column> gbColumns = new ArrayList<Column>();
-		    Pattern pattern = Pattern.compile("([\\w:]+?),");
+		    Pattern pattern = Pattern.compile("(\\w+?),");
 		    Matcher matcher = pattern.matcher(groupBy + ",");
 		    while (matcher.find()) {
 		    	gbColumns.add(new Column(matcher.group(1)));
@@ -271,15 +271,16 @@ public class CsvService {
 		if (isNotBlank(condition)) {
 			List<SearchCriteria> params = new ArrayList<SearchCriteria>();
 		    String operationSetExper = Joiner.on("|").join(SearchOperation.SIMPLE_OPERATION_SET);
-		    Pattern pattern = Pattern.compile("(\\w+?)(" + operationSetExper + ")(\\p{Punct}?)([\\w\\s\\p{Punct}]+?)(\\p{Punct}?),");
+		    Pattern pattern = Pattern.compile("(\\p{Punct}?)(\\w+?)(" + operationSetExper + ")(\\p{Punct}?)([\\w\\s\\p{Punct}]+?)(\\p{Punct}?),");
 		    Matcher matcher = pattern.matcher(condition + ",");
 		    while (matcher.find()) {
 		    	params.add(new SearchCriteria(
-		          matcher.group(1),
+		    	  matcher.group(1),
 		          matcher.group(2),
 		          matcher.group(3),
 		          matcher.group(4),
-		          matcher.group(5)));
+		          matcher.group(5),
+		          matcher.group(6)));
 		    }
 		    
 	        Predicate predicate = builder.conjunction();
@@ -349,6 +350,8 @@ public class CsvService {
     }
 	
 	/**
+	 * This is not used anymore but I keep it here only as an example of Throwing a 500 Error
+	 * 
 	 * Checks if the SQL given as parameter contains any illegal words.
 	 * The illegal words for the moment are: INSERT, DELETE, UPDATE
 	 * This means it will only allow SELECT queries.

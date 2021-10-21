@@ -22,13 +22,14 @@ public class SearchCriteria {
     }
     
     public SearchCriteria(final String orPredicate, final String key, final SearchOperation operation, final Object value) {
-        this.orPredicate = orPredicate != null && orPredicate.equals(SearchOperation.OR_PREDICATE_FLAG);
+        this.orPredicate = SearchOperation.OR_PREDICATE_FLAG.equals(orPredicate);
         this.key = key;
         this.operation = operation;
         this.value = value;
     }
     
-    public SearchCriteria(String key, String operation, String prefix, String value, String suffix) {
+    public SearchCriteria(final String orPredicate, final String key, final String operation, 
+    					  final String prefix, final String value, final String suffix) {
         SearchOperation op = SearchOperation.getSimpleOperation(operation.charAt(0));
         if (op != null) {
             if (op == SearchOperation.EQUALITY) { // the operation may be complex operation
@@ -43,6 +44,7 @@ public class SearchCriteria {
                 }
             }
         }
+        this.orPredicate = SearchOperation.OR_PREDICATE_FLAG.equals(orPredicate);
         this.key = key;
         this.operation = op;
         this.value = value;

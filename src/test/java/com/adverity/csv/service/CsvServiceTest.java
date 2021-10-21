@@ -4,16 +4,25 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,18 +46,27 @@ class CsvServiceTest {
 	private StatisticRepository statisticRepository;
 	@Mock
 	private StatisticMapper statisticMapper;
-	@Mock
+	@Spy
 	private EntityManager entityManager;
-	@Mock
-	Query query;
 	@Spy
 	Model model;
+	@Mock
+	CriteriaBuilder builder;
+	@Spy
+	CriteriaQuery<Object> query;
+	@Spy
+	Root stat;
+	@Mock
+	TypedQuery<Object> typedQuery;
 	
 	private CsvService csvService;
 	
 	@BeforeEach
 	public void init() {
 		MockitoAnnotations.openMocks(this);
+		//builder = entityManager.getCriteriaBuilder();
+		//query = builder.createQuery(Object.class);
+		//stat = query.from(Statistic.class);
 		csvService = new CsvService(statisticRepository, statisticMapper, entityManager);
 	}
 	
@@ -105,12 +123,264 @@ class CsvServiceTest {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * Test handle Display when display parameter is set
+	 */
+	@Test
+	void testHandleDisplay() {
+		String display = "campaign,daily";
+		csvService.handleDisplay(display, builder, query, stat);
+		verify(stat, times(1)).get("campaign");
+		verify(stat, times(1)).get("daily");
+		verify(query, times(1)).multiselect(any(), any());
+	}
 	
 	/**
-	 * Test searching the statistics
+	 * Test handle Display when display parameter is set and contain a sum function
+	 */
+	@Test
+	void testHandleDisplaySum() {
+		String display = "campaign:sum,daily";
+		csvService.handleDisplay(display, builder, query, stat);
+		verify(builder, times(1)).sum(any());
+		verify(stat, times(1)).get("campaign");
+		verify(stat, times(1)).get("daily");
+		verify(query, times(1)).multiselect(any(), any());
+	}
+	
+	/**
+	 * Test handle Display when display parameter is null or empty
+	 */
+	@Test
+	void testHandleDisplayNull() {
+		String display = null;
+		csvService.handleDisplay(display, builder, query, stat);
+		verify(query, times(1)).multiselect(stat.get("datasource"), stat.get("campaign"), stat.get("daily"),
+				stat.get("clicks"), stat.get("impressions"));
+	}
+	
+	/**
+	 * Test handle GroupBy when groupBy parameter is set
+	 */
+	@Test
+	void testHandleGroupBy() {
+		String groupBy = "campaign,daily";
+		csvService.handleGroupBy(groupBy, builder, query, stat);
+		verify(stat, times(1)).get("campaign");
+		verify(stat, times(1)).get("daily");
+		verify(query, times(1)).groupBy(any(), any());
+	}
+	
+	/**
+	 * Test handle GroupBy when groupBy parameter is null or empty
+	 */
+	@Test
+	void testHandleGroupByNull() {
+		String groupBy = null;
+		csvService.handleGroupBy(groupBy, builder, query, stat);
+		verifyNoInteractions(stat);
+		verifyNoInteractions(query);
+	}
+	
+	/**
+	 * Test handle OrderBy when orderBy parameter is set with 2 column names and without direction
+	 */
+	@Test
+	void testHandleOrderBy() {
+		String orderBy = "campaign,daily";
+		csvService.handleOrderBy(orderBy, builder, query, stat);
+		verify(stat, times(1)).get("campaign");
+		verify(stat, times(1)).get("daily");
+		verify(builder, times(2)).asc(any());
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(null);
+		orders.add(null);
+		verify(query, times(1)).orderBy(orders);
+	}
+	
+	/**
+	 * Test handle OrderBy when orderBy parameter is set with 2 column names and direction
+	 */
+	@Test
+	void testHandleOrderByDesc() {
+		String orderBy = "campaign:desc,daily";
+		csvService.handleOrderBy(orderBy, builder, query, stat);
+		verify(stat, times(1)).get("campaign");
+		verify(stat, times(1)).get("daily");
+		verify(builder, times(1)).desc(any());
+		verify(builder, times(1)).asc(any());
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(null);
+		orders.add(null);
+		verify(query, times(1)).orderBy(orders);
+	}
+	
+	/**
+	 * Test handle OrderBy when orderBy parameter is set with 2 column names and without direction. One column is a SUM.
+	 */
+	@Test
+	void testHandleOrderBySum() {
+		String orderBy = "campaign:sum:asc,daily";
+		csvService.handleOrderBy(orderBy, builder, query, stat);
+		verify(stat, times(1)).get("campaign");
+		verify(stat, times(1)).get("daily");
+		verify(builder, times(2)).asc(any());
+		verify(builder, times(1)).sum(any());
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(null);
+		orders.add(null);
+		verify(query, times(1)).orderBy(orders);
+	}
+	
+	/**
+	 * Test handle OrderBy when orderBy parameter is null or empty
+	 */
+	@Test
+	void testHandleOrderByNull() {
+		String orderBy = null;
+		csvService.handleOrderBy(orderBy, builder, query, stat);
+		verifyNoInteractions(builder);
+		verifyNoInteractions(stat);
+		verifyNoInteractions(query);
+	}
+	
+	/**
+	 * Test handle Condition when condition parameter is set
+	 */
+	@Test
+	void testHandleCondition() {
+		String condition = "datasource:Google Ads,daily>01-01-2020";
+		csvService.handleCondition(condition, builder, query, stat);
+		verify(stat, times(1)).get("datasource");
+		verify(stat, times(1)).get("daily");
+		verify(builder, times(1)).equal(null, "Google Ads");
+		verify(builder, times(2)).and(any(), any());
+		LocalDate daily = LocalDate.parse("01-01-2020", DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+		verify(builder, times(1)).greaterThan(null, daily);
+		Predicate predicate = null;
+		verify(query, times(1)).where(predicate);
+	}
+	
+	/**
+	 * Test handle Condition when condition parameter is set and first parameter is combined with the second parameter using OR instead of AND
+	 */
+	@Test
+	void testHandleConditionOr() {
+		String condition = "datasource:Google Ads,'daily>01-01-2020";
+		csvService.handleCondition(condition, builder, query, stat);
+		verify(stat, times(1)).get("datasource");
+		verify(stat, times(1)).get("daily");
+		verify(builder, times(1)).equal(null, "Google Ads");
+		verify(builder, times(1)).and(any(), any());
+		verify(builder, times(1)).or(any(), any());
+		LocalDate daily = LocalDate.parse("01-01-2020", DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+		verify(builder, times(1)).greaterThan(null, daily);
+		Predicate predicate = null;
+		verify(query, times(1)).where(predicate);
+	}
+	
+	/**
+	 * Test handle Condition when condition parameter is null or empty
+	 */
+	@Test
+	void testHandleConditionNull() {
+		String condition = null;
+		csvService.handleCondition(condition, builder, query, stat);
+		verifyNoInteractions(builder);
+		verifyNoInteractions(stat);
+		verifyNoInteractions(query);
+	}
+	
+	/**
+	 * Test Create Query when offset and limit parameters are null or empty
+	 */
+	@Test
+	void testCreateQuery() {
+		String offset = null;
+		String limit = null;
+		Mockito.doReturn(typedQuery).when(entityManager).createQuery(query);
+		Mockito.doReturn(typedQuery).when(typedQuery).setFirstResult(0);
+		csvService.createQuery(query, offset, limit);
+		verify(entityManager, times(1)).createQuery(query);
+		verify(typedQuery, times(1)).setFirstResult(0);
+		verify(typedQuery, times(1)).getResultList();
+	}
+	
+	/**
+	 * Test Create Query when offset parameter is set and limit parameters is null or empty
+	 */
+	@Test
+	void testCreateQueryOffset() {
+		String offset = "100";
+		String limit = null;
+		Mockito.doReturn(typedQuery).when(entityManager).createQuery(query);
+		Mockito.doReturn(typedQuery).when(typedQuery).setFirstResult(100);
+		csvService.createQuery(query, offset, limit);
+		verify(entityManager, times(1)).createQuery(query);
+		verify(typedQuery, times(1)).setFirstResult(100);
+		verify(typedQuery, times(1)).getResultList();
+	}
+	
+	/**
+	 * Test Create Query when offset parameter is null or empty and limit parameters is set
+	 */
+	@Test
+	void testCreateQueryLimit() {
+		String offset = null;
+		String limit = "100";
+		Mockito.doReturn(typedQuery).when(entityManager).createQuery(query);
+		Mockito.doReturn(typedQuery).when(typedQuery).setFirstResult(0);
+		Mockito.doReturn(typedQuery).when(typedQuery).setMaxResults(100);
+		csvService.createQuery(query, offset, limit);
+		verify(entityManager, times(1)).createQuery(query);
+		verify(typedQuery, times(1)).setFirstResult(0);
+		verify(typedQuery, times(1)).setMaxResults(100);
+		verify(typedQuery, times(1)).getResultList();
+	}
+	
+	/**
+	 * Test searching the statistics when all the parameters are set.
+	 * Is checking that all the methods are executed: handleDisplay, handleGroupBy, handleCondition, handleOrderBy, createQuery
 	 */
 	@Test
 	void testSearchStatistics() {
+		String display = "clicks:sum,datasource,campaign"; 
+		String condition = "clicks>0";
+		String groupBy = "datasource,campaign";
+		String orderBy = "clicks:sum:desc";
+		String offset = "100";
+		String limit = "200";
+		String showSQL = null;
+		Mockito.doReturn(builder).when(entityManager).getCriteriaBuilder();
+		Mockito.doReturn(query).when(builder).createQuery(Object.class);
+		Mockito.doReturn(stat).when(query).from(Statistic.class);
+		Mockito.doReturn(typedQuery).when(entityManager).createQuery(query);
+		Mockito.doReturn(typedQuery).when(typedQuery).setFirstResult(100);
+		Mockito.doReturn(typedQuery).when(typedQuery).setMaxResults(200);
+		ArrayList<String> statistics = new ArrayList<String>();
+		statistics.add("Result");
+		Mockito.doReturn(statistics).when(typedQuery).getResultList();
+		String template = csvService.searchStatistics(display, condition, groupBy, orderBy, offset, limit, showSQL, model);
+		assertEquals(template, "query-results");
+		Mockito.verify(model).addAttribute("statistics", statistics);
+		// We have an any() for each column to be displayed, groupedBy, orderBy
+		verify(query, times(1)).multiselect(any(), any(), any());
+		verify(query, times(1)).groupBy(any(), any());
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(null);
+		verify(query, times(1)).orderBy(orders);
+		Predicate predicate = null;
+		verify(query, times(1)).where(predicate);
+		verify(entityManager, times(1)).createQuery(query);
+	}
+	
+	/**
+	 * Test searching the statistics when all the parameters are null or not set
+	 * It only focuses on returning the correct template and that is setting correctly the statistics model attribute
+	 */
+	@Test
+	void testSearchStatisticsNull() {
 		String display = null; 
 		String condition = null;
 		String groupBy = null;
@@ -118,160 +388,18 @@ class CsvServiceTest {
 		String offset = null;
 		String limit = null;
 		String showSQL = null;
-		//ModelMock model = new ModelMock();
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		Mockito.doReturn(query).when(entityManager).createNativeQuery(sql);
+		Mockito.doReturn(builder).when(entityManager).getCriteriaBuilder();
+		Mockito.doReturn(query).when(builder).createQuery(Object.class);
+		Mockito.doReturn(stat).when(query).from(Statistic.class);
+		Mockito.doReturn(typedQuery).when(entityManager).createQuery(query);
+		Mockito.doReturn(typedQuery).when(typedQuery).setFirstResult(0);
+		Mockito.doReturn(typedQuery).when(typedQuery).setMaxResults(100);
 		ArrayList<String> statistics = new ArrayList<String>();
 		statistics.add("Result");
-		Mockito.doReturn(statistics).when(query).getResultList();
+		Mockito.doReturn(statistics).when(typedQuery).getResultList();
 		String template = csvService.searchStatistics(display, condition, groupBy, orderBy, offset, limit, showSQL, model);
 		assertEquals(template, "query-results");
 		Mockito.verify(model).addAttribute("statistics", statistics);
-	}
-	
-	
-	/**
-	 * Test searching the statistics when showSQL parameter is true
-	 */
-	@Test
-	void testSearchStatisticsShowSQL() {
-		String display = null; 
-		String condition = null;
-		String groupBy = null;
-		String orderBy = null;
-		String offset = null;
-		String limit = null;
-		String showSQL = "true";
-		//ModelMock model = new ModelMock();
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		Mockito.doReturn(query).when(entityManager).createNativeQuery(sql);
-		ArrayList<String> statistics = new ArrayList<String>();
-		statistics.add("Result");
-		Mockito.doReturn(statistics).when(query).getResultList();
-		String template = csvService.searchStatistics(display, condition, groupBy, orderBy, offset, limit, showSQL, model);
-		assertEquals(template, "query-results");
-		Mockito.verify(model).addAttribute("statistics", statistics);
-		Mockito.verify(model).addAttribute("sql", sql);
-	}
-	
-	/**
-	 * Test the creation of SQL when no parameter is set
-	 */
-	@Test
-	void testCreateSQLOnlyNullParameters() {
-		String display = null; 
-		String condition = null;
-		String groupBy = null;
-		String orderBy = null;
-		String offset = null;
-		String limit = null;
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		assertEquals(sql, "SELECT * FROM STATISTIC LIMIT 1000");
-	}
-	
-	/**
-	 * Test the creation of SQL when display parameter is set
-	 */
-	@Test
-	void testCreateSQLDisplaySet() {
-		String display = "CAMPAIGN"; 
-		String condition = null;
-		String groupBy = null;
-		String orderBy = null;
-		String offset = null;
-		String limit = null;
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		assertEquals(sql, "SELECT CAMPAIGN FROM STATISTIC LIMIT 1000");
-	}
-	
-	/**
-	 * Test the creation of SQL when condition parameter is set
-	 */
-	@Test
-	void testCreateSQLConditionSet() {
-		String display = null; 
-		String condition = "CAMPAIGN == 'Adventmarkt Touristik'";
-		String groupBy = null;
-		String orderBy = null;
-		String offset = null;
-		String limit = null;
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		assertEquals(sql, "SELECT * FROM STATISTIC WHERE CAMPAIGN == 'Adventmarkt Touristik' LIMIT 1000");
-	}
-	
-	/**
-	 * Test the creation of SQL when groupBy parameter is set
-	 */
-	@Test
-	void testCreateSQLGroupBySet() {
-		String display = null; 
-		String condition = null;
-		String groupBy = "CAMPAIGN";
-		String orderBy = null;
-		String offset = null;
-		String limit = null;
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		assertEquals(sql, "SELECT * FROM STATISTIC GROUP BY CAMPAIGN LIMIT 1000");
-	}
-	
-	/**
-	 * Test the creation of SQL when groupBy and condition parameters are set
-	 */
-	@Test
-	void testCreateSQLGroupByConditionSet() {
-		String display = null; 
-		String condition = "CAMPAIGN == 'Adventmarkt Touristik'";
-		String groupBy = "CAMPAIGN";
-		String orderBy = null;
-		String offset = null;
-		String limit = null;
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		assertEquals(sql, "SELECT * FROM STATISTIC GROUP BY CAMPAIGN HAVING CAMPAIGN == 'Adventmarkt Touristik' LIMIT 1000");
-	}
-	
-	/**
-	 * Test the creation of SQL when orderBy parameter is set
-	 */
-	@Test
-	void testCreateSQLOrderBySet() {
-		String display = null; 
-		String condition = null;
-		String groupBy = null;
-		String orderBy = "CAMPAIGN ASC";
-		String offset = null;
-		String limit = null;
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		assertEquals(sql, "SELECT * FROM STATISTIC ORDER BY CAMPAIGN ASC LIMIT 1000");
-	}
-	
-	/**
-	 * Test the creation of SQL when offset parameter is set
-	 */
-	@Test
-	void testCreateSQLOffsetSet() {
-		String display = null; 
-		String condition = null;
-		String groupBy = null;
-		String orderBy = null;
-		String offset = "10";
-		String limit = null;
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		assertEquals(sql, "SELECT * FROM STATISTIC OFFSET 10 LIMIT 1000");
-	}
-	
-	/**
-	 * Test the creation of SQL when limit parameter is set
-	 */
-	@Test
-	void testCreateSQLLimitSet() {
-		String display = null; 
-		String condition = null;
-		String groupBy = null;
-		String orderBy = null;
-		String offset = null;
-		String limit = "200";
-		String sql = csvService.createSQL(display, condition, groupBy, orderBy, offset, limit);
-		assertEquals(sql, "SELECT * FROM STATISTIC LIMIT 200");
 	}
 	
 	/**
@@ -291,5 +419,5 @@ class CsvServiceTest {
 		String sql = "SELECT INTO STATISTIC WHERE insert test";
 		ResponseStatusException thrown = assertThrows(ResponseStatusException.class, () -> csvService.checkIllegalWords(sql));
 		assertEquals("500 INTERNAL_SERVER_ERROR \"Illegal query!\"", thrown.getMessage());
-	}	
+	}
 }
