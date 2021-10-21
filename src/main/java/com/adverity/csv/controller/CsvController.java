@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -97,57 +96,63 @@ public class CsvController {
 	}
 
 	/**
-	 * Search the database and get a list of Statistic results based on the input
-	 * query parameters .
-	 * This will only create and execute a SELECT query.
-	 * The COLUMN NAMES that could be used here are: DATASOURCE, CAMPAIGN, DAILY, CLICKS,
-	 * IMPRESSIONS, ID .
-	 * We could use one column name or more column names separated by commas .
-	 * We could also use other SQL variables as: COUNT(*) or SUM(CLICKS), etc. 
+	 * Search the database and get a list of Statistic results based on the input query parameters.
+	 * 
+	 * This will create and execute a SELECT query.
+	 * The COLUMN NAMES that could be used here are: datasource, campaign, daily, clicks, impressions, id.
+	 * We could use one column definitions or more column names separated by commas.
+	 * We could also use other SQL variables as: clicks:sum. 
 	 * No input parameter are required. 
-	 * If you do not fill any parameter than it will return all the records but by default 
-	 * there is a 1000 record limits. 
-	 * You could also display all the records if needed See @param limit
+	 * If you do not fill any parameter than it will return all the records 
 	 * 
-	 * @param display   The columns we want to be displayed on results. Can also be
-	 *                  COUNT(*) or a comma separated list of columns If this is not
-	 *                  filled than it will display all the columns Ex:
-	 *                  COUNT(DATASOURCE), DATASOURCE
+	 * What operators could you use?
+	 * : - equality (Ex: datasource:Google Ads) - this is for records that are equal with Google Ads
+	 * ! - negation (Ex: datasource!Google Ads) - this is for records that are not equal with Google Ads
+	 * > - greater than (works fine for numbers or dates) (Ex: daily>01-01-2020)
+	 * < - lower than  (works fine for numbers or dates) (Ex: daily<01-31-2020)
+	 * ~ - like (Ex: datasource~Google Ads) - this is for records that are like Google Ads (see SQL LIKE)
+	 * * - if used at the begining of the word it will search for words starting with (Ex: datasource:*Ads)
+	 * * - if used at the ending of the word it will search for words ending with (Ex: datasource:Google*)
+	 * * - if used at the begining of the word and at the ending of the word it will search for words containing this word (Ex: datasource:*oogle*)
 	 * 
-	 * @param condition If this is used it will apply a condition used as WHERE or
-	 *                  HAVING in the SQL query 
-	 *                  Ex: CAMPAIGN='Adventmarkt Touristik'
-	 *                  Ex: CLICKS>10 
-	 *                  Ex: DAILY>'2020-02-14'
+	 * These are concatenating these conditions using AND but we can also use OR by putting ' in front of the individual condition:
+	 * Ex: datasource:Google Ads,daily>01-01-2020,daily<01-31-2020 - This is for getting the records that have datasource equal with "Google Ads" AND the daily date is in the range we need.
+	 * Ex: datasource:Google Ads,'daily>01-01-2020 - This is for getting the records that have datasource equal with "Google Ads" OR the daily date is greater than 01-01-2020.
 	 * 
-	 * @param groupBy   If this is used than will GROUP BY after columns specified
-	 *                  in this parameter. Can be a comma separated list of columns.
-	 *                  Ex: DATASOURCE,CAMPAIGN
+	 * @param display The columns we want to be displayed on results (comma separated). 
+	 * 			Can also be the name of one columnn followed by :sum (For a SUM on that column values) or a comma separated list of columns
+	 *  		If this is not filled than it will display all the columns.
+	 *  		Ex: datasource
+	 *  		Ex: impressions:sum
+	 * 			Ex: daily,impressions:sum
+	 *  
+	 * @param condition If this is used it will apply a condition used as WHERE (or HAVING) in the SQL query
+	 *  		Ex: campaign:'Adventmarkt Touristik'
+	 *  		Ex: clicks>10
+	 *  		Ex: daily>'2020-02-14'
+	 *  
+	 * @param groupBy If this is used than will GROUP BY after columns specified in this parameter. Can be a comma separated list of columns
+	 *       	Ex: datasource,campaign
+	 *       
+	 * @param orderBy If this is used than it will order the results based on this parameter.
+	 *  		This can be used for ascending or descending order using asc and desc words after the column names 
+	 *  		Ex: campaign:asc or campaign:desc
+	 * 			If you displayed a SUM on a column then this columns should also contain :sum in it
+	 * 			Ex: clicks:sum:desc
+	 *  
+	 * @param offset If this is set than it will show the records starting from this offset. It needs to be a number.
+	 *  		If is not set this will be 0. Using this parameter, Pagination could be easily created.
+	 *  		Ex: 100 - it will display the records starting from this offset
+	 *  
+	 * @param limit If this is set than it will limit the records that is showing.
+	 *  		TO DO Maybe! If is not set than for security reason it should limit the records to a configured limit which is 1000. This value can be changed in the application.
+	 *  		Using this parameter, Pagination could be easily created.
+	 *  		Ex: 10000 - it will limit the returned records to 10000
+	 *  		Ex: If is not set then it will return all the records (be careful with this as if there are many records it will slow your browser)
+	 *  
+	 * @param showSQL This is not working anymore for now. If set to true, it would show the SQL generated on the top of records and the number of records found
 	 * 
-	 * @param orderBy   If this is used than it will order the results based on this
-	 *                  parameter. This can be used for ascending or descending
-	 *                  order using ASC and DESC words after the column names 
-	 *                  Ex: CAMPAIGN ASC or CAMPAIGN DESC
-	 * 
-	 * @param offset    If this is set than it will show the records starting from
-	 *                  this offset. It needs to be a number. If is not set this
-	 *                  will be 0. Using this parameter, Pagination could be easily
-	 *                  created. 
-	 *                  Ex: 100 - it will display the records starting from
-	 *                  this offset
-	 * 
-	 * @param limit     If this is set than it will limit the records that is
-	 *                  showing. If is not set than for security reason it will
-	 *                  limit the records to a configured limit which is 1000. Using
-	 *                  this parameter, Pagination could be easily created. 
-	 *                  Ex: 10000 - it will limit the returned records to 10000 
-	 *                  Ex: no -it will return all the records (be careful with this)
-	 * 
-	 * @param showSQL   If set to true, it will show the SQL generated on the top of
-	 *                  records and the number of records found
-	 * 
-	 * @return a List of records or a text that will indicate the result of this
-	 *         operation (No results or ... Error)
+	 * @return a List of records or a text that will indicate the result of this operation (No results or ... Error)
 	 */
 	@Operation(summary = "Search the database and get a list of Statistic results based on the input query parameters")
 	@ApiResponses(value = {
@@ -158,7 +163,7 @@ public class CsvController {
 	@GetMapping("/search")
 	public String searchStatistics(
 			@Parameter(description = "The columns we want to be displayed on results. "
-					+ "The COLUMN NAMES that could be used here are: DATASOURCE, CAMPAIGN, DAILY, CLICKS, IMPRESSIONS, ID") 
+					+ "The COLUMN NAMES that could be used here are: datasource, campaign, daily, clicks, impressions, id.") 
 				@RequestParam(name = "display", required = false) String display,
 			@Parameter(description = "If this is used it will apply a condition used as WHERE or HAVING in the SQL query")
 				@RequestParam(name = "condition", required = false) String condition,
