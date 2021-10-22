@@ -186,7 +186,7 @@ public class CsvService {
         
         handleDisplay(display, builder, query, stat);
         handleGroupBy(groupBy, builder, query, stat);
-        handleCondition(condition, builder, query, stat);
+        handleCondition(condition, groupBy, builder, query, stat);
 	    handleOrderBy(orderBy, builder, query, stat);
 	    List<Object> statistics = createQuery(query, offset, limit);
 		
@@ -267,7 +267,7 @@ public class CsvService {
 	 * @param query	CriteriaQuery object
 	 * @param stat Root object
 	 */
-	public void handleCondition(String condition, CriteriaBuilder builder, CriteriaQuery<Object> query, Root stat) {
+	public void handleCondition(String condition, String groupBy, CriteriaBuilder builder, CriteriaQuery<Object> query, Root stat) {
 		if (isNotBlank(condition)) {
 			List<SearchCriteria> params = new ArrayList<SearchCriteria>();
 		    String operationSetExper = Joiner.on("|").join(SearchOperation.SIMPLE_OPERATION_SET);
@@ -287,7 +287,11 @@ public class CsvService {
 	        SearchQueryCriteriaConsumer searchConsumer = new SearchQueryCriteriaConsumer(predicate, builder, stat);
 	        params.stream().forEach(searchConsumer);
 	        predicate = searchConsumer.getPredicate();
-	        query.where(predicate);
+	        if (isNotBlank(groupBy)) {
+	        	query.having(predicate);
+	        } else {
+	        	query.where(predicate);
+	        }
 		}
 	}
 	

@@ -251,7 +251,8 @@ class CsvServiceTest {
 	@Test
 	void testHandleCondition() {
 		String condition = "datasource:Google Ads,daily>01-01-2020";
-		csvService.handleCondition(condition, builder, query, stat);
+		String groupBy = null;
+		csvService.handleCondition(condition, groupBy, builder, query, stat);
 		verify(stat, times(1)).get("datasource");
 		verify(stat, times(1)).get("daily");
 		verify(builder, times(1)).equal(null, "Google Ads");
@@ -268,7 +269,8 @@ class CsvServiceTest {
 	@Test
 	void testHandleConditionOr() {
 		String condition = "datasource:Google Ads,'daily>01-01-2020";
-		csvService.handleCondition(condition, builder, query, stat);
+		String groupBy = null;
+		csvService.handleCondition(condition, groupBy, builder, query, stat);
 		verify(stat, times(1)).get("datasource");
 		verify(stat, times(1)).get("daily");
 		verify(builder, times(1)).equal(null, "Google Ads");
@@ -286,7 +288,8 @@ class CsvServiceTest {
 	@Test
 	void testHandleConditionNull() {
 		String condition = null;
-		csvService.handleCondition(condition, builder, query, stat);
+		String groupBy = null;
+		csvService.handleCondition(condition, groupBy, builder, query, stat);
 		verifyNoInteractions(builder);
 		verifyNoInteractions(stat);
 		verifyNoInteractions(query);
@@ -371,7 +374,7 @@ class CsvServiceTest {
 		orders.add(null);
 		verify(query, times(1)).orderBy(orders);
 		Predicate predicate = null;
-		verify(query, times(1)).where(predicate);
+		verify(query, times(1)).having(predicate);
 		verify(entityManager, times(1)).createQuery(query);
 	}
 	
